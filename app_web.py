@@ -9,30 +9,23 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- CUSTOMIZAÇÃO VISUAL COMPLETA (DESIGN IDÊNTICO À FOTO) ---
+# --- CUSTOMIZAÇÃO VISUAL COMPLETA (DESIGN PREMIUM) ---
 st.markdown("""
     <style>
-    /* Fundo da página com o gradiente escuro e azulado da foto */
     .stApp {
         background: linear-gradient(180deg, #090815 0%, #151632 50%, #0d0f1d 100%) !important;
         color: #FFFFFF !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
-
-    /* Customização dos textos */
     h1, h2, h3, p, label, .stCaption {
         color: #FFFFFF !important;
     }
-
-    /* Estilização dos campos de texto (Input e Selectbox) com borda neon sutil */
     .stTextInput div[data-baseweb="input"], .stSelectbox div[data-baseweb="select"] {
         background-color: #121324 !important;
         border: 1px solid #23275b !important;
         border-radius: 14px !important;
         color: #FFFFFF !important;
     }
-
-    /* Botão "Processar Download" com o gradiente roxo/azul brilhante da imagem */
     div.stButton > button:first-child {
         background: linear-gradient(90deg, #0072ff 0%, #7a00ff 100%) !important;
         color: white !important;
@@ -44,8 +37,6 @@ st.markdown("""
         box-shadow: 0px 4px 15px rgba(122, 0, 255, 0.4) !important;
         transition: all 0.3s ease !important;
     }
-
-    /* Botão de download nativo do Streamlit estilizado como botão iOS Secundário */
     div.stDownloadButton > button {
         background-color: #1c1d3a !important;
         color: #38b6ff !important;
@@ -56,13 +47,17 @@ st.markdown("""
         font-size: 16px !important;
         margin-top: 15px !important;
     }
-
-    /* Remove decorações padrão que quebram o visual limpo */
+    /* Estilização da caixa de upload de arquivo */
+    section[data-testid="stFileUploader"] {
+        background-color: #121324 !important;
+        border: 1px dashed #23275b !important;
+        border-radius: 14px !important;
+        padding: 10px !important;
+    }
     #MainMenu, footer, header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
-# Inicialização das variáveis de estado (Session State)
 if "dados_midia" not in st.session_state:
     st.session_state.dados_midia = None
 if "nome_arquivo" not in st.session_state:
@@ -70,9 +65,7 @@ if "nome_arquivo" not in st.session_state:
 if "titulo_video" not in st.session_state:
     st.session_state.titulo_video = ""
 
-
-# Função de download em segundo plano
-def baixar_conteudo_web(url, formato, progresso_bar, status_text):
+def baixar_conteudo_web(url, formato, progresso_bar, status_text, caminho_cookie_usuario=None):
     pasta_temp = "downloads_temp"
     os.makedirs(pasta_temp, exist_ok=True)
     template_destino = os.path.join(pasta_temp, '%(title)s.%(ext)s')
@@ -97,6 +90,10 @@ def baixar_conteudo_web(url, formato, progresso_bar, status_text):
         'quiet': True,
     }
 
+    # --- LÓGICA DE COOKIE DINÂMICO POR USUÁRIO ---
+    if caminho_cookie_usuario and os.path.exists(caminho_cookie_usuario):
+        ydl_opts['cookiefile'] = caminho_cookie_usuario
+
     if formato == "Áudio (MP3)":
         ydl_opts.update({'format': 'bestaudio'})
     else:
@@ -115,33 +112,39 @@ def baixar_conteudo_web(url, formato, progresso_bar, status_text):
 
         return caminho_arquivo, info.get('title', 'video')
 
-
-# --- ESTRUTURA VISUAL DA INTERFACE (IDÊNTICA À FOTO) ---
-
-# Título Principal estilizado
+# --- ESTRUTURA VISUAL DA INTERFACE ---
 st.markdown('<h1 style="text-align: center; margin-bottom: 0px;">📥 DOWNLOAD EM 8K</h1>', unsafe_allow_html=True)
-
-# SOLUÇÃO DEFINITIVA: Mudado para st.caption para evitar erros de HTML do Streamlit
 st.caption("Insira o link abaixo para baixar vídeos ou áudios direto no seu celular.")
 
-# Elementos de entrada de dados
-url_input = st.text_input("URL do Vídeo:", placeholder="Cole o link do YouTube, Inst...")
+url_input = st.text_input("URL do Vídeo:", placeholder="Cole o link do YouTube, Instagram, etc...")
 formato_input = st.selectbox("Selecione o formato:", ["Vídeo (MP4)", "Áudio (MP3)"])
 
-# Espaço reservado para as mensagens de status e progresso
+# --- EXPANDIR EXCLUSIVO PARA ARQUIVO DE COOKIES OPCIONAL ---
+with st.expander("🔑 Vídeo privado ou restrito? Clique aqui para usar seus Cookies"):
+    st.info("Se o vídeo der erro de restrição, faça upload do seu arquivo 'cookies.txt' gerado pelo seu navegador logado.")
+    arquivo_cookie_enviado = st.file_uploader("Escolha o arquivo cookies.txt", type=["txt"])
+
 barra = st.empty()
 status = st.empty()
 
-# Botão principal de ação
 if st.button("Processar Download", use_container_width=True):
     if not url_input:
         st.warning("Por favor, insira uma URL válida.")
     else:
         progresso_barra = barra.progress(0)
         status_texto = status.text("Iniciando conexão...")
+        
+        caminho_cookie_temp = None
 
         try:
-            caminho_local, titulo = baixar_conteudo_web(url_input, formato_input, progresso_barra, status_texto)
+            # Se o usuário enviou um arquivo de cookie na tela, salva ele temporariamente por alguns segundos
+            if arquivo_cookie_enviado is not None:
+                caminho_cookie_temp = f"cookie_user_{st.id if hasattr(st, 'id') else 'session'}.txt"
+                with open(caminho_cookie_temp, "wb") as f_cookie:
+                    f_cookie.write(arquivo_cookie_enviado.getbuffer())
+
+            # Executa o download passando o arquivo enviado por aquele usuário específico
+            caminho_local, titulo = baixar_conteudo_web(url_input, formato_input, progresso_barra, status_texto, caminho_cookie_temp)
 
             with open(caminho_local, "rb") as f:
                 st.session_state.dados_midia = f.read()
@@ -156,7 +159,12 @@ if st.button("Processar Download", use_container_width=True):
             os.remove(caminho_local)
 
         except Exception as e:
-            status.error(f"Erro no processamento: {e}")
+            status.error(f"Erro no processamento: {e}. Se o vídeo for privado, lembre-se de anexar seus cookies acima.")
+        
+        finally:
+            # DESTRUIÇÃO DE SEGURANÇA: Apaga o cookie do usuário imediatamente do servidor após o download terminar ou falhar
+            if caminho_cookie_temp and os.path.exists(caminho_cookie_temp):
+                os.remove(caminho_cookie_temp)
 
 # --- EXIBIÇÃO NA MESMA TELA ---
 if st.session_state.dados_midia is not None:
