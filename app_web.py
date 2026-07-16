@@ -18,12 +18,12 @@ st.markdown("""
         color: #FFFFFF !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
-    
+
     /* Customização dos textos */
     h1, h2, h3, p, label {
         color: #FFFFFF !important;
     }
-    
+
     /* Estilização dos campos de texto (Input e Selectbox) com borda neon sutil */
     .stTextInput div[data-baseweb="input"], .stSelectbox div[data-baseweb="select"] {
         background-color: #121324 !important;
@@ -31,7 +31,7 @@ st.markdown("""
         border-radius: 14px !important;
         color: #FFFFFF !important;
     }
-    
+
     /* Botão "Processar Download" com o gradiente roxo/azul brilhante da imagem */
     div.stButton > button:first-child {
         background: linear-gradient(90deg, #0072ff 0%, #7a00ff 100%) !important;
@@ -44,7 +44,7 @@ st.markdown("""
         box-shadow: 0px 4px 15px rgba(122, 0, 255, 0.4) !important;
         transition: all 0.3s ease !important;
     }
-    
+
     /* Botão de download nativo do Streamlit estilizado como botão iOS Secundário */
     div.stDownloadButton > button {
         background-color: #1c1d3a !important;
@@ -56,7 +56,7 @@ st.markdown("""
         font-size: 16px !important;
         margin-top: 15px !important;
     }
-    
+
     /* Remove decorações padrão que quebram o visual limpo */
     #MainMenu, footer, header {visibility: hidden;}
     </style>
@@ -69,6 +69,7 @@ if "nome_arquivo" not in st.session_state:
     st.session_state.nome_arquivo = ""
 if "titulo_video" not in st.session_state:
     st.session_state.titulo_video = ""
+
 
 # Função de download em segundo plano
 def baixar_conteudo_web(url, formato, progresso_bar, status_text):
@@ -114,11 +115,14 @@ def baixar_conteudo_web(url, formato, progresso_bar, status_text):
 
         return caminho_arquivo, info.get('title', 'video')
 
+
 # --- ESTRUTURA VISUAL DA INTERFACE (IDÊNTICA À FOTO) ---
 
 # Título Principal estilizado
 st.markdown('<h1 style="text-align: center; margin-bottom: 0px;">📥 8K_DOWNLOAD</h1>', unsafe_allow_html=True)
-st.markdown('<p style="text-align: center; color: #8a8dbe !important; margin-bottom: 25px;">Insira o link abaixo para baixar vídeos ou áudios direto no seu celular.</p>', unsafe_allowed_html=False)
+st.markdown(
+    '<p style="text-align: center; color: #8a8dbe !important; margin-bottom: 25px;">Insira o link abaixo para baixar vídeos ou áudios direto no seu celular.</p>',
+    unsafe_allow_html=True) # <-- CORRIGIDO AQUI: Ajustado para o parâmetro correto 'unsafe_allow_html'
 
 # Elementos de entrada de dados
 url_input = st.text_input("URL do Vídeo:", placeholder="Cole o link do YouTube, Inst...")
@@ -144,11 +148,11 @@ if st.button("Processar Download", use_container_width=True):
 
             st.session_state.titulo_video = titulo
             st.session_state.nome_arquivo = os.path.basename(caminho_local)
-            
+
             status_texto.text("")
             progresso_barra.empty()
             status.success(f"Pronto: {titulo}")
-            
+
             os.remove(caminho_local)
 
         except Exception as e:
