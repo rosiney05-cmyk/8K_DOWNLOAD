@@ -1,49 +1,76 @@
 import streamlit as st
 import yt_dlp
 import os
-import io
 
-# Configuração da página Web (Visual Moderno e Responsivo)
+# Configuração da página e ocultação de menus padrão do Streamlit
 st.set_page_config(
     page_title="8K_DOWNLOAD",
     page_icon="📥",
     layout="centered"
 )
 
-# Estilização CSS customizada para deixar os botões com cara de aplicativo iOS
+# --- CUSTOMIZAÇÃO VISUAL COMPLETA (DESIGN IDÊNTICO À FOTO) ---
 st.markdown("""
     <style>
-    .stButton>button {
-        border-radius: 12px;
-        height: 3em;
-        font-weight: bold;
+    /* Fundo da página com o gradiente escuro e azulado da foto */
+    .stApp {
+        background: linear-gradient(180deg, #090815 0%, #151632 50%, #0d0f1d 100%) !important;
+        color: #FFFFFF !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
-    div[data-testid="stNotification"] {
-        border-radius: 12px;
+    
+    /* Customização dos textos */
+    h1, h2, h3, p, label {
+        color: #FFFFFF !important;
     }
+    
+    /* Estilização dos campos de texto (Input e Selectbox) com borda neon sutil */
+    .stTextInput div[data-baseweb="input"], .stSelectbox div[data-baseweb="select"] {
+        background-color: #121324 !important;
+        border: 1px solid #23275b !important;
+        border-radius: 14px !important;
+        color: #FFFFFF !important;
+    }
+    
+    /* Botão "Processar Download" com o gradiente roxo/azul brilhante da imagem */
+    div.stButton > button:first-child {
+        background: linear-gradient(90deg, #0072ff 0%, #7a00ff 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 14px !important;
+        height: 3.2em !important;
+        font-weight: bold !important;
+        font-size: 16px !important;
+        box-shadow: 0px 4px 15px rgba(122, 0, 255, 0.4) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    /* Botão de download nativo do Streamlit estilizado como botão iOS Secundário */
+    div.stDownloadButton > button {
+        background-color: #1c1d3a !important;
+        color: #38b6ff !important;
+        border: 1px solid #38b6ff !important;
+        border-radius: 14px !important;
+        height: 3.2em !important;
+        font-weight: bold !important;
+        font-size: 16px !important;
+        margin-top: 15px !important;
+    }
+    
+    /* Remove decorações padrão que quebram o visual limpo */
+    #MainMenu, footer, header {visibility: hidden;}
     </style>
-""", unsafe_allow_html=True) # <-- CORRIGIDO: Parâmetro corrigido para evitar o TypeError
+""", unsafe_allow_html=True)
 
-# Inicializa variáveis de estado da tela se elas não existirem
-if "download_concluido" not in st.session_state:
-    st.session_state.download_concluido = False
-if "titulo_video" not in st.session_state:
-    st.session_state.titulo_video = ""
+# Inicialização das variáveis de estado (Session State)
 if "dados_midia" not in st.session_state:
     st.session_state.dados_midia = None
 if "nome_arquivo" not in st.session_state:
     st.session_state.nome_arquivo = ""
-
-
-# Função para resetar o estado e voltar para a tela de inputs
-def voltar_ao_inicio():
-    st.session_state.download_concluido = False
+if "titulo_video" not in st.session_state:
     st.session_state.titulo_video = ""
-    st.session_state.dados_midia = None
-    st.session_state.nome_arquivo = ""
 
-
-# Função de download otimizada para o ambiente do Servidor Web
+# Função de download em segundo plano
 def baixar_conteudo_web(url, formato, progresso_bar, status_text):
     pasta_temp = "downloads_temp"
     os.makedirs(pasta_temp, exist_ok=True)
@@ -56,10 +83,10 @@ def baixar_conteudo_web(url, formato, progresso_bar, status_text):
             if total > 0:
                 porcentagem = baixado / total
                 progresso_bar.progress(porcentagem)
-                status_text.text(f"Baixando para o servidor... {int(porcentagem * 100)}%")
+                status_text.text(f"Baixando: {int(porcentagem * 100)}%")
         elif d['status'] == 'finished':
             progresso_bar.progress(1.0)
-            status_text.text("Download concluído no servidor! Preparando arquivo...")
+            status_text.text("Concluído no servidor! Gerando arquivo...")
 
     ydl_opts = {
         'progress_hooks': [progress_callback],
@@ -87,61 +114,53 @@ def baixar_conteudo_web(url, formato, progresso_bar, status_text):
 
         return caminho_arquivo, info.get('title', 'video')
 
+# --- ESTRUTURA VISUAL DA INTERFACE (IDÊNTICA À FOTO) ---
 
-# --- FLUXO DE TELAS DA INTERFACE ---
+# Título Principal estilizado
+st.markdown('<h1 style="text-align: center; margin-bottom: 0px;">📥 8K_DOWNLOAD</h1>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center; color: #8a8dbe !important; margin-bottom: 25px;">Insira o link abaixo para baixar vídeos ou áudios direto no seu celular.</p>', unsafe_allowed_html=False)
 
-# TELA 2: Executada após o download terminar no servidor (Evita a tela preta do Safari)
-if st.session_state.download_concluido:
-    st.title("✅ Arquivo Pronto!")
-    st.subheader(st.session_state.titulo_video)
+# Elementos de entrada de dados
+url_input = st.text_input("URL do Vídeo:", placeholder="Cole o link do YouTube, Inst...")
+formato_input = st.selectbox("Selecione o formato:", ["Vídeo (MP4)", "Áudio (MP3)"])
 
-    # Exibe o player inline correspondente ao formato
-    if st.session_state.nome_arquivo.endswith(".mp4"):
-        st.video(st.session_state.dados_midia)
-        st.info("💡 Toque e segure sobre o vídeo acima (ou clique no ícone do player) para salvá-lo na Galeria.")
+# Espaço reservado para as mensagens de status e progresso
+barra = st.empty()
+status = st.empty()
+
+# Botão principal de ação
+if st.button("Processar Download", use_container_width=True):
+    if not url_input:
+        st.warning("Por favor, insira uma URL válida.")
     else:
-        st.audio(st.session_state.dados_midia)
-        st.info("💡 Clique nos três pontinhos do player de áudio para fazer o download.")
+        progresso_barra = barra.progress(0)
+        status_texto = status.text("Iniciando conexão...")
 
-    st.write("---")
+        try:
+            caminho_local, titulo = baixar_conteudo_web(url_input, formato_input, progresso_barra, status_texto)
 
-    # BOTÃO PEDIDO: Retorna para o painel inicial limpando a memória
-    if st.button("🔄 Voltar para a Tela Inicial", use_container_width=True):
-        voltar_ao_inicio()
-        st.rerun()
+            with open(caminho_local, "rb") as f:
+                st.session_state.dados_midia = f.read()
 
-# TELA 1: Tela padrão de inputs e processamento inicial
-else:
-    st.title("📥 8K_DOWNLOAD")
-    st.write("Insira o link abaixo para baixar vídeos ou áudios direto no seu celular.")
+            st.session_state.titulo_video = titulo
+            st.session_state.nome_arquivo = os.path.basename(caminho_local)
+            
+            status_texto.text("")
+            progresso_barra.empty()
+            status.success(f"Pronto: {titulo}")
+            
+            os.remove(caminho_local)
 
-    url_input = st.text_input("URL do Vídeo:", placeholder="Cole o link do YouTube, Instagram, etc. aqui...")
-    formato_input = st.selectbox("Selecione o formato:", ["Vídeo (MP4)", "Áudio (MP3)"])
+        except Exception as e:
+            status.error(f"Erro no processamento: {e}")
 
-    if st.button("Processar Download", use_container_width=True):
-        if not url_input:
-            st.warning("Por favor, insira uma URL válida.")
-        else:
-            barra = st.progress(0)
-            status = st.empty()
-            status.text("Iniciando conexão...")
-
-            try:
-                caminho_local, titulo = baixar_conteudo_web(url_input, formato_input, barra, status)
-
-                # Transfere o arquivo físico para a memória do estado da sessão
-                with open(caminho_local, "rb") as f:
-                    st.session_state.dados_midia = f.read()
-
-                st.session_state.titulo_video = titulo
-                st.session_state.nome_arquivo = os.path.basename(caminho_local)
-                st.session_state.download_concluido = True
-
-                # Limpa o arquivo temporário físico do disco do servidor
-                os.remove(caminho_local)
-
-                # Recarrega a interface aplicando a mudança para a Tela 2
-                st.rerun()
-
-            except Exception as e:
-                status.error(f"Ocorreu um erro no processamento: {e}")
+# --- ATUALIZAÇÃO SOLICITADA: EXIBIÇÃO NA MESMA TELA ---
+# Se o arquivo já foi processado e guardado em cache, mostra o botão de salvar logo abaixo
+if st.session_state.dados_midia is not None:
+    st.download_button(
+        label="➡️ SALVAR EM ARQUIVOS DO IPHONE ⬅️",
+        data=st.session_state.dados_midia,
+        file_name=st.session_state.nome_arquivo,
+        mime="video/mp4" if st.session_state.nome_arquivo.endswith(".mp4") else "audio/mp3",
+        use_container_width=True
+    )
