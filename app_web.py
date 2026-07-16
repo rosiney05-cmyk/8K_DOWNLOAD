@@ -20,7 +20,7 @@ st.markdown("""
     }
 
     /* Customização dos textos */
-    h1, h2, h3, p, label {
+    h1, h2, h3, p, label, .stCaption {
         color: #FFFFFF !important;
     }
 
@@ -119,10 +119,10 @@ def baixar_conteudo_web(url, formato, progresso_bar, status_text):
 # --- ESTRUTURA VISUAL DA INTERFACE (IDÊNTICA À FOTO) ---
 
 # Título Principal estilizado
-st.markdown('<h1 style="text-align: center; margin-bottom: 0px;">📥 8K_DOWNLOAD</h1>', unsafe_allow_html=True)
-st.markdown(
-    '<p style="text-align: center; color: #8a8dbe !important; margin-bottom: 25px;">Insira o link abaixo para baixar vídeos ou áudios direto no seu celular.</p>',
-    unsafe_allow_html=True) # <-- CORRIGIDO AQUI: Ajustado para o parâmetro correto 'unsafe_allow_html'
+st.markdown('<h1 style="text-align: center; margin-bottom: 0px;">📥 DOWNLOAD EM 8K</h1>', unsafe_allow_html=True)
+
+# SOLUÇÃO DEFINITIVA: Mudado para st.caption para evitar erros de HTML do Streamlit
+st.caption("Insira o link abaixo para baixar vídeos ou áudios direto no seu celular.")
 
 # Elementos de entrada de dados
 url_input = st.text_input("URL do Vídeo:", placeholder="Cole o link do YouTube, Inst...")
@@ -158,8 +158,7 @@ if st.button("Processar Download", use_container_width=True):
         except Exception as e:
             status.error(f"Erro no processamento: {e}")
 
-# --- ATUALIZAÇÃO SOLICITADA: EXIBIÇÃO NA MESMA TELA ---
-# Se o arquivo já foi processado e guardado em cache, mostra o botão de salvar logo abaixo
+# --- EXIBIÇÃO NA MESMA TELA ---
 if st.session_state.dados_midia is not None:
     st.download_button(
         label="➡️ SALVAR EM ARQUIVOS DO IPHONE ⬅️",
